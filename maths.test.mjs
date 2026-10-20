@@ -1,0 +1,15 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import * as M from '../js/maths.js';
+const close = (a, b, e = 1e-9) => assert.ok(Math.abs(a - b) < e, `${a} ≠ ${b}`);
+test('C(49,5)', () => assert.equal(M.comb(49, 5), 1906884n));
+test('cas limites C', () => { for (const n of [0, 1, 7, 49]) { assert.equal(M.comb(n, 0), 1n); assert.equal(M.comb(n, n), 1n); } assert.equal(M.comb(30, 11), M.comb(30, 19)); assert.equal(M.comb(5, 6), 0n); assert.equal(M.comb(49, 3), 18424n); });
+test('grands nombres exacts', () => assert.equal(M.comb(100, 50), 100891344545564193334812497256n));
+test('probabilités de référence', () => { close(5 / 49, 0.1020408163, 1e-10); close(5 / 588, 0.00850340136, 1e-11); close(M.probSubset(2), 5 / 588, 1e-12); close(M.probSubset(3), Number(M.comb(46, 2)) / Number(M.comb(49, 5)), 1e-12); });
+test('jackpot = 1/19 068 840', () => { const o = M.probOutcome(5, true); assert.equal(o.fav, 1n); assert.equal(o.total, 19068840n); });
+test('somme des probabilités = 1 (calcul indépendant)', () => { let s = 0; for (let k = 0; k <= 5; k++) for (const c of [true, false]) s += M.probOutcome(k, c).p; close(s, 1, 1e-9); });
+test('hypergéométrique vs formule explicite k=3', () => close(M.probMatch(3).p, (10 * 946) / 1906884, 1e-12));
+test('khi-deux : valeurs de table', () => { close(M.chi2Sf(3.841459, 1), 0.05, 1e-4); close(M.chi2Sf(66.339, 48), 0.0389, 2e-3); close(M.chi2Sf(0, 5), 1); });
+test('Wilson', () => { const [a, b] = M.wilson(50, 100); close(a, 0.4038, 1e-3); close(b, 0.5962, 1e-3); });
+test('Benjamini-Hochberg & Bonferroni', () => { const b = M.benjaminiHochberg([0.01, 0.04, 0.03, 0.005]); close(b[0], 0.02); close(b[3], 0.02); close(b[2], 0.04); assert.deepEqual(M.bonferroni([0.5, 0.01]), [1, 0.02]); });
+test('khi-deux non applicable si effectifs < 5', () => assert.equal(M.chiSquareGof([1, 2], [2, 1]).applicable, false));
+test('somme min/max/espérance', () => { assert.equal(1 + 2 + 3 + 4 + 5, 15); assert.equal(45 + 46 + 47 + 48 + 49, 235); assert.equal(5 * 50 / 2, 125); });
